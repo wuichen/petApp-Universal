@@ -15,7 +15,7 @@ app.use(cookieParser());
 // APIs
 var mongoose = require('mongoose');
 //MONGO LAB
-//mongoose.connect('mongodb://testU:gustavo01@ds043012.mlab.com:43012/bookshop')
+mongoose.connect('mongodb://testU:gustavo01@ds043012.mlab.com:43012/bookshop')
 //LOCAL DB
 //mongoose.connect('mongodb://localhost:27017/bookshop');
 
