@@ -4,7 +4,10 @@ import React from 'react';
 import {createStore} from 'redux';
 import {Provider} from 'react-redux';
 import {renderToString} from 'react-dom/server';
-import {match, RouterContext} from 'react-router';
+
+// REACT-ROUTER 4 CHANGES
+//import {match, RouterContext} from 'react-router';
+import {StaticRouter} from 'react-router-dom';
 
 import reducers from './src/reducers/index';
 import routes from './src/routes';
@@ -20,31 +23,30 @@ function handleRender(req, res){
         // STEP-2 GET INITIAL STATE FROM THE STORE
         const initialState = JSON.stringify(store.getState()).replace(/<\/script/g, '<\\/script').replace(/<!--/g, '<\\!--');
         // STEP-3 IMPLEMENT REACT-ROUTER ON THE SERVER TO INTERCEPT CLIENT REQUESTs AND DEFINE WHAT TO DO WITH THEM
-        const Routes ={
-          routes:routes,
-          location:req.url
-        }
-        match(Routes, function(error, redirect, props){
-          if(error){
-            res.status(500).send("Error fullfilling the request");
-          } else if(redirect){
-            res.status(302, redirect.pathname + redirect.search)
-          } else if(props){
+        const context = {};
+        console.log("How context looks like? ", context.url);
             const reactComponent = renderToString(
               <Provider store={store}>
-                <RouterContext {...props}/>
+                <StaticRouter
+                  location={req.url}
+                  context={context}>
+                  {routes}
+                </StaticRouter>
               </Provider>
-            )
-            res.status(200).render('index', {reactComponent, initialState})
-          } else {
-            res.status(404).send('Not Found')
-          }
-        })
+            );
 
-    })
-    .catch(function(err){
-      console.log('#Initial Server-side rendering error', err);
-    })
-}
+            if (context.url) {
+              // can use the `context.status` that
+              // we added in RedirectWithStatus
+              redirect(context.status, context.url)
+            } else {
+              res.status(200).render('index', {reactComponent, initialState})
+            }
 
-module.exports = handleRender;
+      })
+      .catch(function(err){
+        console.log('#Initial Server-side rendering error', err);
+      })
+    }
+
+module.exports = handleRender
